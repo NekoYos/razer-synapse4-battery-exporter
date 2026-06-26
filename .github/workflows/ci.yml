@@ -1,0 +1,58 @@
+name: CI
+run-name: CI - ${{ github.ref_name }}
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    name: Test
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Format check
+        shell: pwsh
+        run: |
+          $files = @(gofmt -l .)
+          if ($files.Count -eq 0) {
+            Write-Host "gofmt check passed"
+          } else {
+            $files
+            Write-Error "Go files are not gofmt-formatted"
+          }
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build executable
+        shell: pwsh
+        run: |
+          $version = "dev"
+          if ($env:GITHUB_REF_TYPE -eq "tag") {
+            $version = $env:GITHUB_REF_NAME
+          }
+          $commit = git rev-parse --short HEAD
+          $buildDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          go build `
+            -ldflags="-X main.version=$version -X main.commit=$commit -X main.buildDate=$buildDate" `
+            -o dist\razer-synapse4-battery-exporter.exe `
+            ./cmd/razer-synapse4-battery-exporter
+
+      - name: Upload executable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: razer-synapse4-battery-exporter-windows-amd64
+          path: dist/razer-synapse4-battery-exporter.exe
+          if-no-files-found: error

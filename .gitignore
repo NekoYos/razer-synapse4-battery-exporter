@@ -1,0 +1,31 @@
+# Build artifacts
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Local Go caches
+.gocache/
+.gomodcache/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.old
+*.~
+*~
+
+# IDE/editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local agent/tooling state
+.agents/
+.codex/
+DEVELOPMENT_STATUS.md

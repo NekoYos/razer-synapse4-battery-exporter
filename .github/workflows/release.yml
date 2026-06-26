@@ -1,0 +1,56 @@
+name: Release
+run-name: Release - ${{ github.ref_name }}
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build executable
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME
+          $commit = git rev-parse --short HEAD
+          $buildDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+          $packageName = "razer-synapse4-battery-exporter-$version-windows-amd64"
+
+          New-Item -ItemType Directory -Path dist\package\bin -Force | Out-Null
+          New-Item -ItemType Directory -Path dist\package\scripts -Force | Out-Null
+          go build `
+            -ldflags="-X main.version=$version -X main.commit=$commit -X main.buildDate=$buildDate" `
+            -o dist\package\bin\razer-synapse4-battery-exporter.exe `
+            ./cmd/razer-synapse4-battery-exporter
+
+          Copy-Item -LiteralPath scripts\install.ps1 -Destination dist\package\scripts\install.ps1
+          Copy-Item -LiteralPath README.md -Destination dist\package\README.md
+          Copy-Item -LiteralPath LICENSE -Destination dist\package\LICENSE
+          Compress-Archive `
+            -Path dist\package\* `
+            -DestinationPath "dist\$packageName.zip" `
+            -Force
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/razer-synapse4-battery-exporter-*-windows-amd64.zip
+          generate_release_notes: true
