@@ -243,6 +243,25 @@ scrape_configs:
           - localhost:9978
 ```
 
+## Grafana Dashboard
+
+Grafana dashboard files can be placed under:
+
+```text
+docs/grafana/
+```
+
+Recommended filenames:
+
+```text
+docs/grafana/dashboard.json
+docs/grafana/screenshot.png
+```
+
+When `docs/grafana/screenshot.png` is added, it will be displayed here:
+
+![Grafana dashboard](docs/grafana/screenshot.png)
+
 ## License
 
 MIT
